@@ -1,4 +1,8 @@
-/* UNPUBLISHED, LICENSED SOFTWARE.
+/* ========================================
+ *
+ * Copyright YOUR COMPANY, THE YEAR
+ * All Rights Reserved
+ * UNPUBLISHED, LICENSED SOFTWARE.
  *
  * CONFIDENTIAL AND PROPRIETARY INFORMATION
  * WHICH IS THE PROPERTY OF your company.
@@ -13,6 +17,24 @@
 #include "queue.h"
 
 SemaphoreHandle_t bouton_semph;
+task_params_t task_A = {
+    .delay=1000,
+    .message="Tache A en cours\n\r"
+};
+task_params_t task_B = {
+    .delay = 999,
+    .message = "Tache B en cours\n\r"
+};
+
+void print_loop(task_params_t*params)
+{
+    for(;;)
+    {
+    vTaskDelay(pdMS_TO_TICKS(params->delay));
+    UART_PutString(params->message);
+    }
+    
+}
 
 void isr_bouton()
 {
@@ -65,6 +87,24 @@ int main(void)
     bouton_semph = xSemaphoreCreateBinary();
     xTaskCreate(bouton_task,"bouton_task",100,NULL,1,0);
     xTaskCreate(isr_bouton,"isr_bouton",100,NULL,1,0);
+    task_params_t* tacheA=NULL;
+    tacheA=&task_A;
+    xTaskCreate(
+        print_loop(tacheA),
+        "task A",
+        configMINIMAL_STACK_SIZE,
+        (void*) &task_A,
+        1,
+        NULL);
+    task_params_t* tacheB=NULL;
+    tacheB=&task_B;
+    xTaskCreate(
+        print_loop(task_B),
+        "task B",
+        configMINIMAL_STACK_SIZE,
+        (void*) &task_B,
+        1,
+        NULL);
     vTaskStartScheduler();
     
     for(;;)
@@ -74,3 +114,4 @@ int main(void)
 }
 
 /* [] END OF FILE */
+
