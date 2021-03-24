@@ -16,7 +16,10 @@
 #include "params.h"
 #include "queue.h"
 
+
 SemaphoreHandle_t bouton_semph;
+QueueHandle_t print_queue;
+BaseType_t queue_send;
 task_params_t task_A = {
     .delay=1000,
     .message="Tache A en cours\n\r"
@@ -30,8 +33,9 @@ void print_loop(task_params_t*params)
 {
     for(;;)
     {
-    vTaskDelay(pdMS_TO_TICKS(params->delay));
-    UART_PutString(params->message);
+    // Avant la question bonus : vTaskDelay(pdMS_TO_TICKS(params->delay));
+  //Avant la question bonus :  UART_PutString(params->message);
+    xQueueSend(print_queue, params->message,pdMS_TO_TICKS(params->delay));
     }
     
 }
@@ -45,7 +49,7 @@ void isr_bouton()
 
 void bouton_task()
 {
-    UART_Start();        // Initialisation de l'unité UART 1
+    
     for(;;)
     {
         xSemaphoreTake(bouton_semph,portMAX_DELAY);
@@ -74,8 +78,18 @@ void inverseLED ()
 
 }
 
+void print()
+{
+    char*message;
+    for(;;){
+        xQueueReceive(print_queue,&message,portMAX_DELAY);
+        UART_PutString(message);
+    }
+}
+
 int main(void)
 {
+    UART_Start();        // Initialisation de l'unité UART 1
     __enable_irq(); /* Enable global interrupts. */    /* Enable CM4.  CY_CORTEX_M4_APPL_ADDR must be updated if CM4 memory layout is changed. */
     Cy_SysInt_Init(&Bouton_ISR_cfg, isr_bouton);
     NVIC_ClearPendingIRQ(Bouton_ISR_cfg.intrSrc);
@@ -107,6 +121,10 @@ int main(void)
         NULL);
     vTaskStartScheduler();
     
+    print_queue = xQueueCreate(2, sizeof(char*));
+    
+    
+    
     for(;;)
     {
         /* Place your application code here. */
@@ -114,4 +132,3 @@ int main(void)
 }
 
 /* [] END OF FILE */
-
