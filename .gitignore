@@ -7,6 +7,12 @@
 *.obj
 *.elf
 
+build/Release
+codegentemp
+Generated_Source
+CortexM4
+CortexM0P
+
 # Linker output
 *.ilk
 *.map
